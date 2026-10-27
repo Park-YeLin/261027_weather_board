@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026 서부발전 교육 – 현장 일정 날씨판 전체 작업 요약</title>
+  <style>
+    body { font-family: "Malgun Gothic", -apple-system, sans-serif; max-width: 960px; margin: 30px auto; padding: 24px; background: #f8faf7; color: #222; line-height: 1.6; }
+    h1 { color: #2f6b22; border-bottom: 3px solid #2f6b22; padding-bottom: 10px; }
+    h2 { color: #28541c; margin-top: 36px; border-left: 5px solid #2f6b22; padding-left: 10px; }
+    h3 { color: #3d7a2e; margin-top: 20px; }
+    .card { background: #fff; border: 1px solid #d5e3c9; border-radius: 8px; padding: 18px 22px; margin: 16px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    code { background: #eef4ea; color: #205c14; padding: 2px 6px; border-radius: 4px; font-size: 14px; font-family: Consolas, monospace; }
+    pre { background: #1e241c; color: #d6f2c9; padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid #d5e3c9; padding: 8px 12px; text-align: left; font-size: 14px; }
+    th { background: #eaf3e3; font-weight: bold; }
+    .badge { display: inline-block; background: #2f6b22; color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .meta { color: #666; font-size: 14px; margin-bottom: 24px; }
+    ul { padding-left: 20px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+
+  <h1>현장 일정 날씨판 (weather_board) – 전체 작업 요약 보고서</h1>
+  <p class="meta">
+    📅 <strong>작업 일시</strong>: 2026-10-27 | 
+    📂 <strong>저장소</strong>: <a href="https://github.com/Park-YeLin/261027_weather_board" target="_blank">Park-YeLin/261027_weather_board</a>
+  </p>
+
+  <div class="card">
+    <h3>📌 오늘 수행된 핵심 작업 목차</h3>
+    <ul>
+      <li><strong>1. GitHub 원격 저장소 연결</strong> : <code>git init</code>, 기본 브랜치 <code>main</code>, 첫 커밋 및 푸시</li>
+      <li><strong>2. 오늘 날짜 표시 및 롤백 실습</strong> : 제목 아래 날짜 표시 구현 후 <code>git reset --hard</code> 롤백</li>
+      <li><strong>3. PRD F-04 날씨 연동</strong> : Open-Meteo API 연동, R-01~R-04 판단, <code>?test=wind</code> 시험 모드</li>
+      <li><strong>4. PRD F-05 일정 데이터 분리 및 마크다운</strong> : <code>data/tasks.json</code> 분리, 마크다운 표 다운로드</li>
+      <li><strong>5. PRD F-06 Supabase DB 연동</strong> : <code>wx_tasks</code> 테이블, 제약조건, <code>setup.sql</code>, <code>config.js</code></li>
+      <li><strong>6. PRD F-07 기상청 단기예보 API</strong> : <code>/api/kma?region=대전</code> 서버리스 API 및 <code>KMA_KEY</code> 연동</li>
+    </ul>
+  </div>
+
+  <h2>1. GitHub 원격 저장소 초기화 및 연결</h2>
+  <div class="card">
+    <p>로컬 <code>weather_board</code> 디렉터리를 GitHub 원격 저장소와 연결하고 첫 커밋을 생성했습니다.</p>
+    <pre><code>git init
+git branch -M main
+git remote add origin https://github.com/Park-YeLin/261027_weather_board.git
+git add .
+git commit -m "feat: initial commit"
+git push -u origin main</code></pre>
+  </div>
+
+  <h2>2. 오늘 날짜 표시 기능 및 롤백</h2>
+  <div class="card">
+    <p>제목 아래에 오늘 날짜(<code>YYYY-MM-DD</code>)를 동적으로 표시하는 <code>renderTodayDate()</code> 함수를 구현하고, 이후 이전 커밋으로 원복하는 롤백(<code>git reset --hard HEAD~1</code> 및 <code>git push --force</code>)을 수행했습니다.</p>
+  </div>
+
+  <h2>3. PRD F-04: Open-Meteo 날씨 API 연동 및 판단</h2>
+  <div class="card">
+    <span class="badge">커밋: add weather</span>
+    <p>세종·대전·태안·보령의 오늘 최고기온, 최대풍속, 강수확률을 비동기 병렬(<code>Promise.all</code>)로 수신하고 업무 규칙(R-01~R-04)을 적용했습니다.</p>
+    <ul>
+      <li><code>logic.js</code>: <code>getWeatherUrl()</code>, <code>parseWeather()</code>, <code>judge()</code></li>
+      <li><code>app.js</code>: <code>fetchWeather()</code>, 상단 <code>#weatherBox</code> 요약 업데이트</li>
+      <li><strong>시험 모드</strong>: <code>?test=wind</code> 접속 시 풍속 12m/s 강제 적용하여 고소 작업 중지 검토(R-02) 시험 지원</li>
+    </ul>
+  </div>
+
+  <h2>4. PRD F-05: 일정 데이터 분리 및 마크다운 다운로드</h2>
+  <div class="card">
+    <span class="badge">커밋: feat: 일정 목록을 data/tasks.json으로 분리 및 CLAUDE.md 규칙 추가</span>
+    <ul>
+      <li>가상 일정을 <code>data/tasks.json</code> 파일로 분리하고, <code>app.js</code>에서 이를 기본으로 로드</li>
+      <li>로컬 더블클릭(<code>file:///</code>) 환경에서 브라우저 CORS 차단 시 <code>'배포 주소로 열어 주세요'</code> 안내 표시</li>
+      <li><strong>마크다운 저장</strong>: <code>오늘 판단 md로 저장</code> 버튼 클릭 시 <code>현장일정_판단_YYYY-MM-DD.md</code> 파일로 자동 다운로드 (하단에 판단 기준 1줄 포함)</li>
+    </ul>
+  </div>
+
+  <h2>5. PRD F-06: Supabase 데이터베이스(wx_tasks) 연동</h2>
+  <div class="card">
+    <span class="badge">커밋: feat: PRD F-06 Supabase DB(wx_tasks) 연동 및 setup.sql, config.js 추가</span>
+    <ul>
+      <li><code>setup.sql</code>: <code>region IN ('세종', '대전', '태안', '보령')</code>, <code>kind IN ('야외', '고소', '실내')</code> CHECK 제약조건, RLS 정책 및 시드 데이터 6건</li>
+      <li><code>config.js</code>: 비밀 키 없이 <code>SUPABASE_URL</code>과 <code>SUPABASE_ANON_KEY</code> 단 2줄로 구성</li>
+      <li><code>app.js</code>: Supabase DB에서 일정 목록 실시간 <code>select</code> 및 폼 제출 시 <code>insert</code></li>
+    </ul>
+  </div>
+
+  <h2>6. PRD F-07: 기상청 단기예보 서버리스 API (/api/kma)</h2>
+  <div class="card">
+    <span class="badge">커밋: create api</span>
+    <p><code>/api/kma?region=대전</code> 호출 시 기상청 날씨와 Supabase DB 일정을 조합하여 일정, 날씨, 판단 결과가 포함된 통합 JSON을 응답합니다.</p>
+    <ul>
+      <li><strong>보안</strong>: Vercel 환경 변수 <code>process.env.KMA_KEY</code>를 백엔드에서 읽어 호출하므로 클라이언트에 키가 유출되지 않음</li>
+      <li><strong>안정성</strong>: 기상청 API 장애 또는 로컬 환경 시 Open-Meteo로 자동 Fallback</li>
+      <li><strong>PRD 갱신</strong>: <code>PRD.md</code>에 F-07 및 T-05 완료 기준 추가</li>
+    </ul>
+    <pre><code>// 응답 JSON 예시:
+{
+  "success": true,
+  "region": "대전",
+  "weather": { "tempMax": 16, "windMax": 6.8, "rainProb": 0, "source": "기상청(KMA)" },
+  "tasksCount": 2,
+  "tasks": [
+    {
+      "title": "하천 수위계 확인",
+      "region": "대전",
+      "kind": "야외",
+      "owner": "최현장",
+      "judgement": { "level": "ok", "text": "진행" }
+    },
+    {
+      "title": "비상연락 훈련",
+      "region": "대전",
+      "kind": "실내",
+      "owner": "한상황",
+      "judgement": { "level": "ok", "text": "영향 없음" }
+    }
+  ]
+}</code></pre>
+  </div>
+
+</body>
+</html>
