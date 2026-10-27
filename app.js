@@ -59,6 +59,61 @@ function addTask(e) {
   renderTasks();
 }
 
+async function fetchWeather() {
+  const weatherBox = document.getElementById('weatherBox');
+  const isTestWind = new URLSearchParams(window.location.search).get('test') === 'wind';
+
+  if (weatherBox) {
+    weatherBox.textContent = '날씨 정보를 불러오는 중...';
+  }
+
+  try {
+    const regions = Object.keys(REGION_COORDS);
+    const promises = regions.map(async (region) => {
+      const url = getWeatherUrl(region);
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`날씨 정보를 가져오지 못했습니다 (${region}: ${res.status})`);
+      }
+      const data = await res.json();
+      const w = parseWeather(data);
+      if (isTestWind) {
+        w.windMax = 12;
+      }
+      return { region, weather: w };
+    });
+
+    const results = await Promise.all(promises);
+    for (const item of results) {
+      weatherByRegion[item.region] = item.weather;
+    }
+
+    if (weatherBox) {
+      const summary = regions
+        .map((r) => `${r}: ${weatherText(weatherByRegion[r])}`)
+        .join(' | ');
+      weatherBox.textContent = isTestWind
+        ? `[시험 모드 (?test=wind): 풍속 12m/s 적용 중] ${summary}`
+        : `오늘 지역별 날씨: ${summary}`;
+    }
+  } catch (err) {
+    console.error('날씨 정보를 불러오는 중 오류 발생:', err);
+    if (isTestWind) {
+      for (const region of Object.keys(REGION_COORDS)) {
+        weatherByRegion[region] = { tempMax: 20, windMax: 12, rainProb: 0 };
+      }
+    }
+    if (weatherBox) {
+      weatherBox.textContent = isTestWind
+        ? '[시험 모드 (?test=wind): 풍속 12m/s 적용 중] (오프라인)'
+        : '날씨 정보를 불러오지 못했습니다. (목록은 정상 표시됩니다)';
+    }
+  } finally {
+    renderTasks();
+  }
+}
+
 document.getElementById('taskForm').addEventListener('submit', addTask);
 loadTasks();
 renderTasks();
+fetchWeather();
