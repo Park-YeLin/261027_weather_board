@@ -45,6 +45,34 @@ function judge(kind, w) {
   return { level: 'ok', text: '진행' };
 }
 
+// 날씨 정보 문자열 변환
+function formatWeather(w) {
+  return w ? `${w.tempMax}℃ · ${w.windMax}m/s · ${w.rainProb}%` : '-';
+}
+
+// 오늘 판단 마크다운 텍스트 생성
+function generateMarkdown(tasks, weatherByRegion, dateStr) {
+  const date = dateStr || new Date().toISOString().slice(0, 10);
+  const lines = [
+    `# 현장 일정 날씨 판단 (${date})`,
+    '',
+    '| 일정 | 지역 | 구분 | 담당 | 날씨 | 판단 |',
+    '|---|---|---|---|---|---|',
+  ];
+
+  for (const t of tasks || []) {
+    const w = (weatherByRegion && weatherByRegion[t.region]) || null;
+    const r = judge(t.kind, w);
+    const wx = formatWeather(w);
+    lines.push(`| ${t.title} | ${t.region} | ${t.kind} | ${t.owner} | ${wx} | ${r.text} |`);
+  }
+
+  lines.push('');
+  lines.push(`* 판단 기준: 풍속 ${RULES.wind}m/s 이상(고소 작업 중지 검토) · 최고기온 ${RULES.heat}℃ 이상(폭염 휴식) · 강수확률 ${RULES.rain}% 이상(우천 주의) · 실내(영향 없음)`);
+
+  return lines.join('\n');
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { RULES, REGION_COORDS, getWeatherUrl, parseWeather, judge };
+  module.exports = { RULES, REGION_COORDS, getWeatherUrl, parseWeather, judge, formatWeather, generateMarkdown };
 }

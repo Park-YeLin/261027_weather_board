@@ -2,6 +2,8 @@ body { font-family: "Malgun Gothic", sans-serif; max-width: 920px; margin: 0 aut
 header h1 { margin: 8px 0 0; color: #2f6b22; }
 .sub { margin: 4px 0 16px; color: #666; }
 .card { background: #fff; border: 1px solid #d5e3c9; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.card-header h2 { margin: 0; }
 h2 { font-size: 18px; margin: 0 0 10px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border-bottom: 1px solid #e3e3e3; padding: 6px 4px; text-align: left; font-size: 14px; }
