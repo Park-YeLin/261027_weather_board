@@ -16,6 +16,7 @@
 - app.js     : 화면 동작 (목록 그리기, 일정 추가)
 - config.js  : Supabase 연결 정보 (주소 · 공개용 키 2줄만)
 - setup.sql  : Supabase wx_tasks 테이블 생성 및 RLS 정책
+- api/kma.js : 지역별 일정·날씨·판단 서버리스 API 엔드포인트 (Vercel)
 - data/tasks.json : 가상 기본 일정 데이터
 - PRD.md · CLAUDE.md · README.md : 문서
 
@@ -28,4 +29,5 @@
 - 가상 데이터만 사용한다. 실제 이름 · 연락처 · 기관 내부 자료를 넣지 않는다.
 - 데이터는 Supabase의 wx_tasks 표에 저장하고 조회한다.
 - 연결 정보는 config.js에 공개용 키(anon)만 두며, 비밀 키(service_role)는 코드 · 채팅 · GitHub 에 절대 넣지 않는다.
+- 기상청 API 키는 Vercel 환경 변수(KMA_KEY)로 관리하며, 코드나 GitHub에 직접 노출하지 않는다.
 - 사용자가 입력한 글자는 textContent 로 표시한다.
