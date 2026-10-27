@@ -1,21 +1,34 @@
 // app.js – 화면 동작 (목록 그리기, 일정 추가)
 
-// 01 단원 : 일정 목록을 코드 안에 둠 (가상 데이터) → 04 단원에서 data/tasks.json 으로 분리
-const SAMPLE_TASKS = [
-  { title: '다중이용시설 안전점검', region: '세종', kind: '야외', owner: '김안전' },
-  { title: '시민 안전체험 행사 운영', region: '보령', kind: '야외', owner: '이행사' },
-  { title: '옥상 태양광 설비 점검', region: '태안', kind: '고소', owner: '박설비' },
-  { title: '하천 수위계 확인', region: '대전', kind: '야외', owner: '최현장' },
-  { title: '청사 외벽 간판 보수', region: '세종', kind: '고소', owner: '정시설' },
-  { title: '비상연락 훈련', region: '대전', kind: '실내', owner: '한상황' },
-];
-
+let baseTasks = [];
 let tasks = [];
 let weatherByRegion = {};   // 03 단원에서 지역별 날씨를 넣음
+let tasksReadFailed = false;
 
-function loadTasks() {
+async function loadTasks() {
+  const msgBox = document.getElementById('msgBox');
+  tasksReadFailed = false;
+  try {
+    const res = await fetch('data/tasks.json');
+    if (!res.ok) {
+      throw new Error(`tasks.json 로드 실패 (${res.status})`);
+    }
+    baseTasks = await res.json();
+    if (msgBox && msgBox.textContent === '배포 주소로 열어 주세요') {
+      msgBox.textContent = '';
+    }
+  } catch (err) {
+    console.warn('tasks.json 읽기 실패 (로컬 더블클릭 환경 등):', err);
+    tasksReadFailed = true;
+    baseTasks = [];
+    if (msgBox) {
+      msgBox.textContent = '배포 주소로 열어 주세요';
+    }
+  }
+
   const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
-  tasks = SAMPLE_TASKS.concat(saved);
+  tasks = baseTasks.concat(saved);
+  renderTasks();
 }
 
 function weatherText(w) {
@@ -25,6 +38,19 @@ function weatherText(w) {
 function renderTasks() {
   const body = document.getElementById('taskList');
   body.innerHTML = '';
+
+  if (tasks.length === 0 && tasksReadFailed) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.style.textAlign = 'center';
+    td.style.color = '#c62828';
+    td.textContent = '배포 주소로 열어 주세요';
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
+
   for (const t of tasks) {
     const w = weatherByRegion[t.region];
     const r = judge(t.kind, w);
@@ -55,7 +81,7 @@ function addTask(e) {
   saved.push(t);
   localStorage.setItem('wx_added', JSON.stringify(saved));
   e.target.reset();
-  loadTasks();
+  tasks = baseTasks.concat(saved);
   renderTasks();
 }
 
@@ -115,5 +141,4 @@ async function fetchWeather() {
 
 document.getElementById('taskForm').addEventListener('submit', addTask);
 loadTasks();
-renderTasks();
 fetchWeather();
